@@ -1,0 +1,27 @@
+#!/bin/sh
+# Very very hacky script to read notifications from D-Bus and draw them with sxalert
+
+count=3
+dbus-monitor "interface='org.freedesktop.Notifications',member='Notify'" | stdbuf -oL -eL sed 's/         string/sstring/g' | grep "string" --line-buffered |
+while read -r message; do
+	if printf "%s" $message | grep -E "^sstring" > /dev/null; then
+		if ! [ "$combtext" = "" ]; then
+			IFS='"' read -ra args_array <<< "$combtext"
+			sxalert "${args_array[@]}"
+		fi
+		count=2;
+		combtext=""
+	fi
+
+	if [ $count -lt 0 ]; then
+		text=`echo $message | cut -d\" -f2`
+		if ! [ "$text" = "" ]; then
+			combtext="$combtext $text\""
+		fi
+	fi
+
+	count=$((count-1))
+	if [ $count -lt -2 ]; then
+		count=4
+	fi
+done
