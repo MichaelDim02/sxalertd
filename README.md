@@ -1,0 +1,2 @@
+# sxalertd
+sxalert daemon script
